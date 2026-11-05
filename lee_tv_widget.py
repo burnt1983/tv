@@ -60,7 +60,6 @@ PID = HOME / ".cache" / "lee-tv.pid"
 LOG = Path("/tmp/tv-widget.log")
 ICON = HOME / ".local" / "share" / "icons" / "hicolor" / "256x256" / "apps" / "lee-tv.png"
 APP_DESKTOP = HOME / ".local" / "share" / "applications" / "lee-tv.desktop"
-APPS_DESKTOP = HOME / "Desktop" / "Grok" / "Apps" / "lee-tv.desktop"
 AUTOSTART = HOME / ".config" / "autostart" / "lee-tv.desktop"
 
 # 1080p widescreen. The picture stays 16:9 at every size.
@@ -259,10 +258,10 @@ def free_insets(width: int, height: int, strut_left: int = 0, strut_top: int = 0
 def monitor_work() -> tuple[int, int, int, int]:
     display = Gdk.Display.get_default()
     if display is None or display.get_n_monitors() < 1:
-        return 0, 0, 2048, 1280
+        return 0, 0, 1920, 1080
     monitor = display.get_primary_monitor() or display.get_monitor(0)
     if monitor is None:
-        return 0, 0, 2048, 1280
+        return 0, 0, 1920, 1080
     work = monitor.get_workarea()
     return int(work.x), int(work.y), int(work.width), int(work.height)
 
@@ -339,7 +338,7 @@ def desktop_file() -> str:
 def install_launchers() -> None:
     write_icon()
     body = desktop_file()
-    for path in (APP_DESKTOP, APPS_DESKTOP):
+    for path in (APP_DESKTOP,):
         path.parent.mkdir(parents=True, exist_ok=True)
         if not path.exists() or path.read_text(encoding="utf-8") != body:
             path.write_text(body, encoding="utf-8")
@@ -466,8 +465,6 @@ def pin_panel() -> None:
         return
     if "lee-old-television.desktop" in apps:
         apps.insert(apps.index("lee-old-television.desktop") + 1, desktop_id)
-    elif "lee-radio.desktop" in apps:
-        apps.insert(apps.index("lee-radio.desktop") + 1, desktop_id)
     else:
         apps.insert(0, desktop_id)
     payload = "[" + ", ".join(f"'{item}'" for item in apps) + "]"

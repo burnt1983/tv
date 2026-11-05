@@ -12,7 +12,7 @@ Needs Python 3, GTK 3, PyGObject, cairo, and GStreamer with the HLS plugin
 ```bash
 git clone https://github.com/burnt1983/tv.git
 cd tv
-./install.sh
+bash install.sh
 tv
 ```
 
@@ -41,7 +41,7 @@ A station can go offline. The glass stays on static until the next one locks.
 ## Uninstall
 
 ```bash
-./uninstall.sh
+bash uninstall.sh
 ```
 
 ## Licence

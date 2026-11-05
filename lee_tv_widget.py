@@ -12,11 +12,9 @@ XWayland so it can remember its place.
 """
 from __future__ import annotations
 
-import ast
 import json
 import os
 import signal
-import subprocess
 import sys
 import time
 import warnings
@@ -79,9 +77,8 @@ UA = (
 )
 
 # Freeview lineup where the broadcaster publishes an open HLS stream.
-# Checked from this network on 2 Nov 2026. ITV, Channel 4, Channel 5,
-# UKTV and Sky's main channels are locked, so they are not listed.
-# BBC One is the London feed.
+# ITV, Channel 4, Channel 5, UKTV and Sky's main channels are locked,
+# so they are not listed. BBC One is the London feed.
 
 
 def bbc_uk(service: str) -> str:
@@ -308,10 +305,7 @@ def write_state(cfg: dict) -> None:
 
 
 def command_path() -> str:
-    """Launcher path written into the desktop file. ~/bin/tv on this machine."""
-    for candidate in (Path.home() / "bin" / "tv", Path.home() / ".local" / "bin" / "tv"):
-        if candidate.exists():
-            return str(candidate)
+    """Launcher path written into the desktop file."""
     return str(Path(__file__).resolve())
 
 
@@ -436,46 +430,6 @@ def pid_alive(pid: int) -> bool:
     except OSError:
         return False
     return "lee_tv_widget.py" in text or PRGNAME in text
-
-
-def session_env() -> dict[str, str]:
-    env = os.environ.copy()
-    env.setdefault("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
-    bus = Path(env["XDG_RUNTIME_DIR"]) / "bus"
-    if bus.exists():
-        env.setdefault("DBUS_SESSION_BUS_ADDRESS", f"unix:path={bus}")
-    env.setdefault("DISPLAY", ":0")
-    return env
-
-
-def pin_panel() -> None:
-    """Pin the launcher on the left dock, next to Old Television."""
-    desktop_id = APP_DESKTOP.name
-    try:
-        raw = subprocess.check_output(
-            ["gsettings", "get", "org.gnome.shell", "favorite-apps"],
-            env=session_env(),
-            text=True,
-        )
-        apps = ast.literal_eval(raw.strip())
-    except (OSError, subprocess.CalledProcessError, SyntaxError, ValueError) as exc:
-        log(f"pin failed {exc}")
-        return
-    if not isinstance(apps, list) or desktop_id in apps:
-        return
-    if "lee-old-television.desktop" in apps:
-        apps.insert(apps.index("lee-old-television.desktop") + 1, desktop_id)
-    else:
-        apps.insert(0, desktop_id)
-    payload = "[" + ", ".join(f"'{item}'" for item in apps) + "]"
-    try:
-        subprocess.check_call(
-            ["gsettings", "set", "org.gnome.shell", "favorite-apps", payload],
-            env=session_env(),
-        )
-        log("pinned to panel")
-    except (OSError, subprocess.CalledProcessError) as exc:
-        log(f"pin set failed {exc}")
 
 
 def claim_pid(replace: bool) -> None:
@@ -1251,11 +1205,6 @@ class TVWindow(Gtk.Window):
                 source.set_property("timeout", 8)
             except Exception:
                 pass
-        if source.find_property("ssl-strict"):
-            try:
-                source.set_property("ssl-strict", False)
-            except Exception:
-                pass
 
     def _tune_next(self) -> None:
         nxt = 0 if self.channel < 0 else (self.channel + 1) % len(CHANNELS)
@@ -1442,7 +1391,6 @@ def main() -> None:
     Gst.init(None)
     claim_pid(replace)
     install_launchers()
-    pin_panel()
     window = TVWindow(load_cfg())
     window.show_all()
     if int(window.channel) < 0:
